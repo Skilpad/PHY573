@@ -1,0 +1,16 @@
+*.rpt
+*.dpf
+*.done
+*.cdf
+*.fit.*
+*.map.*
+*.pin
+*.pof
+*.sof
+*.sta
+*.summary
+*.bak
+db/*
+db
+incremental_db/*
+incremental_db
