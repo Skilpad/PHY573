@@ -22,7 +22,18 @@ entity boiteEffet is
 KEY : in std_logic_vector(3 downto 0);
 CLOCK_50 : in std_logic;
 HEX0 : out std_logic_vector(6 downto 0);
-LEDR : out std_logic_vector(17 downto 0)
+LEDR : out std_logic_vector(17 downto 0);
+
+
+     I2C_SCLK    : out std_logic;   -- horloge du bus I²C
+     I2C_SDAT    : inout std_logic; -- donnée  du bus I²C
+     AUD_DACDAT  : out std_logic;   -- DAC donnée audio
+     AUD_ADCLRCK : out std_logic;   -- ADC horloge Gauche/Droite
+     AUD_ADCDAT  : in std_logic;    -- ADC donnée audio
+     AUD_DACLRCK : out std_logic;   -- DAC horloge Gauche/Droite
+     AUD_XCK     : out std_logic;   -- horloge du codec
+     AUD_BCLK    : out std_logic    -- ADC/DAC horloge bit
+
 
 -- name : mode type ;
 
@@ -55,18 +66,10 @@ signal fromadc : std_logic_vector (15 downto 0);
 signal rdRwrL  : std_logic := '0';
 signal rdLwrR  : std_logic := '0';
 
-signal I2C_SCLK    : std_logic;   -- horloge du bus I²C
-signal I2C_SDAT    : std_logic; -- donnée  du bus I²C
-signal AUD_DACDAT  : std_logic;   -- DAC donnée audio
-signal AUD_ADCLRCK : std_logic;   -- ADC horloge Gauche/Droite
-signal AUD_ADCDAT  : std_logic;    -- ADC donnée audio
-signal AUD_DACLRCK : std_logic;   -- DAC horloge Gauche/Droite
-signal AUD_XCK     : std_logic;   -- horloge du codec
-signal AUD_BCLK    : std_logic;    -- ADC/DAC horloge bit
-
 signal lastL : std_logic_vector (15 downto 0);
 signal lastR : std_logic_vector (15 downto 0);
 
+-- signal zzz : std_logic_vector (15 downto 0) := "0000000000000000";
 
 
 
@@ -97,74 +100,22 @@ begin
 	process (CLOCK_50)
 	begin
 
-		if CLOCK_50'event and CLOCK_50 = '1' then
+		if rising_edge(CLOCK_50) then
 			
 			if rdLwrR = '1' then
 				lastL <= fromadc;
+				todac <= lastR;
 			end if;
 
 			if rdRwrL = '1' then
 				lastR <= fromadc;
+				todac <= lastL;
 			end if;
-			
+	
 		end if;
 
 	end process;	
 
-
-	
-	todac <= lastR when rdLwrR = '1' else lastL ;
-
-
-
-
-
-
-
-	--  ## OLD PORJECT ##
-
-	appui <= b and (a xor b);
-
-
-	LedsRouges : for toto in 0 to 17 generate
-
-	LEDR(toto) <= '1' when (danse = toto) else '0';
-
-	end generate;
-		
-
-	with tempo select
-		-- RAPPEL: 1 = INACTIF, 0 = ACTIF
-		maxDivis <=10000000 when 1,
-					5000000 when 2,
-					1000000 when 3,
-					500000 when 4,
-					100000 when 5,
-					50000 when 6,
-					10000 when 7,
-					5000 when 8,
-					1000 when 9,
-					100000 when others;
-					
-
-	 
-	process (CLOCK_50)
-		begin
-		
-		if CLOCK_50'event and CLOCK_50 = '1' then
-
-			b <= a;
-			a <= KEY(3);
-			
-		end if;
-	end process;
-	 
-	 
-	circuit_1 : decodeur
-	port map(
-		nombre => tempo, -- tempo
-		sortie => HEX0
-	);
 
 
 
