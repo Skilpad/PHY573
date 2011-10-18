@@ -25,11 +25,11 @@ with nombre select
 				"1111000" when 7,
 				"0000000" when 8,
 				"0010000" when 9,
-        "0001000" when 10;
-        "1100000" when 11;
-        "0110001" when 12;
-        "1000010" when 13;
-        "0110000" when 14;
-        "0111000" when 15;
+ 			   "0001000" when 10,
+			   "1100000" when 11,
+			   "0110001" when 12,
+ 			   "1000010" when 13, 
+			   "0110000" when 14,
+ 			   "0111000" when 15,
 				"1111111" when others;
 end decodeur_arch;
