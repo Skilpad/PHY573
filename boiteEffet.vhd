@@ -182,9 +182,6 @@ begin
 						state <= s9;
 			end case;
 		end if;
-					
-		
-		
 		
 	end process;	
 
