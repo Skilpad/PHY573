@@ -40,7 +40,7 @@ port (
 	SRAM_WE_N   : out std_logic;
 	SRAM_OE_N   : out std_logic;
 	SRAM_UB_N   : out std_logic;
-	SRAM_LB_N   : out std_logic;
+	SRAM_LB_N   : out std_logic
 	
 -- name : mode type ;
 
@@ -78,7 +78,7 @@ architecture boiteEffet_arch of boiteEffet is
 -- signal lastR : std_logic_vector (15 downto 0);
 
 
-type state_type is (s0,s1,s2,s3,s4,s5,s6,s7,s8,s9)
+type state_type is (s0,s1,s2,s3,s4,s5,s6,s7,s8,s9);
 
 signal position : integer range 0 to 131072 := 0;      -- Readed position in memory
 signal posDelay : integer range 0 to 131072 := 70000;  -- Written position in memory
@@ -157,28 +157,30 @@ begin
 						posDelay <= posDelay + 1;
 						state <= s1;
 				when s1 =>
-						SRAM_WE_N <= 0;
+						SRAM_WE_N <= '0';
 						state <= s2;
 				when s2 =>
-						SRAM_WE_N <= 1;
+						SRAM_WE_N <= '1';
 						state <= s3;
 				when s3 =>
-						SRAM_ADDR <= std_logic_vector(to_usigned(position,18));
+						SRAM_ADDR <= std_logic_vector(to_unsigned(position,18));
 						state <= s4;
 				when s4 =>
-						SRAM_OE_N <= 1;
+						SRAM_OE_N <= '1';
 						state <= s5;
 				when s5 =>
 						wSignal <= SRAM_DQ;
 						state <= s6;
 				when s6 =>
-						SRAM_OE_N <= 0;
+						SRAM_OE_N <= '0';
 						state <= s7;
 				when s7 =>
-						SRAM_ADDR <= std_logic_vector(to_usigned(posDelay,18));
+						SRAM_ADDR <= std_logic_vector(to_unsigned(posDelay,18));
 						state <= s8;
 				when s8 =>
 						wSignal <= SRAM_DQ;
+						state <= s9;
+				when others =>
 						state <= s9;
 			end case;
 		end if;
