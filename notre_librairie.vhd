@@ -72,5 +72,16 @@ port(
 );
 end component ram_writer;
 
+component inout_to_in_out is
+port(
+  inout16 : inout std_logic_vector (15 downto 0); 
+  inout18 : inout std_logic_vector (17 downto 0); 
+  in16    : in    std_logic_vector (15 downto 0); 
+  in18    : in    std_logic_vector (17 downto 0); 
+  out16   : out   std_logic_vector (15 downto 0); 
+  out18   : out   std_logic_vector (17 downto 0)
+);
+end component inout_to_in_out;
+
 
 end notre_librairie;

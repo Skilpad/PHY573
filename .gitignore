@@ -12,5 +12,6 @@
 *.bak
 db/*
 db
+Cours/*
 incremental_db/*
 incremental_db
