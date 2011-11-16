@@ -13,9 +13,9 @@ use IEEE.numeric_std.all;
 entity ram_reader is
 port(
   -- RAM
-	SRAM_ADDR : out std_logic_vector (17 downto 0);
-	SRAM_WE_N : out std_logic;
-	SRAM_OE_N : out std_logic;
+	SRAM_ADDR : inout std_logic_vector (17 downto 0);
+	SRAM_WE_N : inout std_logic;
+	SRAM_OE_N : inout std_logic;
 	SRAM_DQ   : in  std_logic_vector (15 downto 0);
   -- Time
 	CLOCK_50  : in  std_logic;
@@ -48,7 +48,7 @@ begin
           if start = '0' then
             state <= start_is_0;
           else
-            SRAM_ADDR <= cnt + delay;
+            SRAM_ADDR <= std_logic_vector(to_unsigned(cnt + delay,18));
             SRAM_OE_N <= '0';
             SRAM_WE_N <= '1';
             freeRAM   <= '0';
@@ -59,7 +59,7 @@ begin
           freeRAM <= '1';
           state <= x_read;
       when x_read =>
-          output <= alpha*x + beta;
+          output <= alpha * x + beta;
           state <= done;
       when done =>
           if start = '0' then

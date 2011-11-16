@@ -13,9 +13,9 @@ use IEEE.numeric_std.all;
 entity ram_writer is
 port(
   -- RAM
-	SRAM_ADDR : out std_logic_vector (17 downto 0);
-	SRAM_WE_N : out std_logic;
-	SRAM_OE_N : out std_logic;
+	SRAM_ADDR : inout std_logic_vector (17 downto 0);
+	SRAM_WE_N : inout std_logic;
+	SRAM_OE_N : inout std_logic;
 	SRAM_DQ   : out std_logic_vector (15 downto 0);
   -- Time
 	CLOCK_50  : in  std_logic;

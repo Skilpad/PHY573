@@ -20,7 +20,7 @@ port(
 -- liste des entrées sorties
 
 	KEY : in std_logic_vector(3 downto 0);
-  SW  : in std_logic_vector(17 downto 0);
+   SW  : in std_logic_vector(17 downto 0);
 	CLOCK_50 : in std_logic;
 	HEX0 : out std_logic_vector(6 downto 0);
 	HEX1 : out std_logic_vector(6 downto 0);
@@ -90,15 +90,14 @@ signal readable : std_logic := '0';                    -- If rSignal is correct
 signal state : state_type;
 
 
-signal addr   : std_logic_vector (17 downto 0);
-signal addr0  : std_logic_vector (17 downto 0) := "000000000000000000";
-signal addr1  : std_logic_vector (17 downto 0) := "000000000000000001";
-signal zero16 : std_logic_vector (15 downto 0) := "0000000000000000";
-signal un16   : std_logic_vector (15 downto 0) := "0000000000000001";
-signal deux16 : std_logic_vector (15 downto 0) := "0000000000000010";
+signal addr0  : integer range 0 to 262143 := 0;
+signal addr1  : integer range 0 to 262143 := 1;
+signal zero16 : integer range 0 to 65536  := 0;
+signal un16   : integer range 0 to 65536  := 1;
+signal deux16 : integer range 0 to 65536  := 2;
 
-signal output0 : std_logic_vector (15 downto 0);
-signal output1 : std_logic_vector (15 downto 0);
+signal output0 : integer range 0 to 65536;
+signal output1 : integer range 0 to 65536;
 
 -- signal zzz : std_logic_vector (15 downto 0) := "0000000000000000";
 
@@ -127,7 +126,7 @@ begin
 	circuit_0 : ram_reader
 	port map(
     -- RAM
-    SRAM_ADDR => addr,
+    SRAM_ADDR => SRAM_ADDR,
     SRAM_WE_N => SRAM_WE_N,
     SRAM_OE_N => SRAM_OE_N,
     SRAM_DQ   => SRAM_DQ,
@@ -137,7 +136,7 @@ begin
     freeRAM   => open,
     -- Values
     cnt       => addr0,
-    delay     => "000000000000000000",
+    delay     => addr0,
     alpha     => un16,
     beta      => zero16,
     -- output
@@ -147,7 +146,7 @@ begin
 	circuit_1 : ram_reader
 	port map(
     -- RAM
-    SRAM_ADDR => addr,
+    SRAM_ADDR => SRAM_ADDR,
     SRAM_WE_N => SRAM_WE_N,
     SRAM_OE_N => SRAM_OE_N,
     SRAM_DQ   => SRAM_DQ,
@@ -157,19 +156,13 @@ begin
     freeRAM   => open,
     -- Values
     cnt       => addr1,
-    delay     => "000000000000000001",
+    delay     => addr1,
     alpha     => deux16,
     beta      => un16,
     -- output
     output    => output1
 	);
   
-  HEX0(6 downto 0) <= output0(6 downto 0);
-  HEX1(6 downto 0) <= output1(6 downto 0);
-  SRAM_ADDR <= addr;
-
-
-
 
 
 end boiteEffet_arch;
