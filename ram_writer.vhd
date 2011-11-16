@@ -24,7 +24,7 @@ port(
   -- Values
   cnt       : in  integer range 0 to 262143;      -- 2^18 = 262144 cells in RAM
   delay     : in  integer range 0 to 262143;
-  input     : in  std_logic_vector (15 downto 0);
+  input     : in  std_logic_vector (15 downto 0)
 );
 end ram_writer;
 
