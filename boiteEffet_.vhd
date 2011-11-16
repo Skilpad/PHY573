@@ -14,16 +14,15 @@ use work.notre_librairie.all;
 -- use IEEE.std_logic_signed.all;
 
 
+
 entity boiteEffet is
-port(
+port (
 
 -- liste des entrées sorties
 
 	KEY : in std_logic_vector(3 downto 0);
-  SW  : in std_logic_vector(17 downto 0);
 	CLOCK_50 : in std_logic;
 	HEX0 : out std_logic_vector(6 downto 0);
-	HEX1 : out std_logic_vector(6 downto 0);
 	LEDR : out std_logic_vector(17 downto 0);
 
 
@@ -36,10 +35,10 @@ port(
 	AUD_XCK     : out std_logic;   -- horloge du codec
 	AUD_BCLK    : out std_logic;   -- ADC/DAC horloge bit
 
-	SRAM_ADDR   : inout std_logic_vector (17 downto 0);
+	SRAM_ADDR   : out std_logic_vector (17 downto 0);
 	SRAM_DQ     : inout std_logic_vector (15 downto 0); 
-	SRAM_WE_N   : inout std_logic;
-	SRAM_OE_N   : inout std_logic;
+	SRAM_WE_N   : out std_logic;
+	SRAM_OE_N   : out std_logic;
 	SRAM_UB_N   : out std_logic;
 	SRAM_LB_N   : out std_logic
 	
@@ -89,17 +88,6 @@ signal readable : std_logic := '0';                    -- If rSignal is correct
 
 signal state : state_type;
 
-
-signal addr   : std_logic_vector (17 downto 0);
-signal addr0  : std_logic_vector (17 downto 0) := "000000000000000000";
-signal addr1  : std_logic_vector (17 downto 0) := "000000000000000001";
-signal zero16 : std_logic_vector (15 downto 0) := "0000000000000000";
-signal un16   : std_logic_vector (15 downto 0) := "0000000000000001";
-signal deux16 : std_logic_vector (15 downto 0) := "0000000000000010";
-
-signal output0 : std_logic_vector (15 downto 0);
-signal output1 : std_logic_vector (15 downto 0);
-
 -- signal zzz : std_logic_vector (15 downto 0) := "0000000000000000";
 
 
@@ -124,50 +112,80 @@ begin
 --		AUD_BCLK    => AUD_BCLK  
 --	);
 
-	circuit_0 : ram_reader
+	circuit_1 : muxsoninout
 	port map(
-    -- RAM
-    SRAM_ADDR => addr,
-    SRAM_WE_N => SRAM_WE_N,
-    SRAM_OE_N => SRAM_OE_N,
-    SRAM_DQ   => SRAM_DQ,
-    -- Time
-    CLOCK_50  => CLOCK_50,
-    start     => SW(0),
-    freeRAM   => open,
-    -- Values
-    cnt       => addr0,
-    delay     => "000000000000000000",
-    alpha     => un16,
-    beta      => zero16,
-    -- output
-    output    => output0
+		clk     => CLOCK_50,
+		todac   => wSignal,
+		fromadc => rSignal,
+		rdRwrL  => open,
+		rdLwrR  => readable,
+		-- signaux 
+		I2C_SCLK    => I2C_SCLK,
+		I2C_SDAT    => I2C_SDAT,
+		AUD_DACDAT  => AUD_DACDAT,
+		AUD_ADCLRCK => AUD_ADCLRCK,
+		AUD_ADCDAT  => AUD_ADCDAT,
+		AUD_DACLRCK => AUD_DACLRCK,
+		AUD_XCK     => AUD_XCK,
+		AUD_BCLK    => AUD_BCLK  
 	);
 
-	circuit_1 : ram_reader
-	port map(
-    -- RAM
-    SRAM_ADDR => addr,
-    SRAM_WE_N => SRAM_WE_N,
-    SRAM_OE_N => SRAM_OE_N,
-    SRAM_DQ   => SRAM_DQ,
-    -- Time
-    CLOCK_50  => CLOCK_50,
-    start     => SW(1),
-    freeRAM   => open,
-    -- Values
-    cnt       => addr1,
-    delay     => "000000000000000001",
-    alpha     => deux16,
-    beta      => un16,
-    -- output
-    output    => output1
-	);
-  
-  HEX0(6 downto 0) <= output0(6 downto 0);
-  HEX1(6 downto 0) <= output1(6 downto 0);
-  SRAM_ADDR <= addr;
+	
+	process (CLOCK_50)
+	begin
 
+--		if rising_edge(CLOCK_50) then
+--			
+--			if rdLwrR = '1' then
+--				lastL <= fromadc;
+--				todac <= lastR;
+--			end if;
+--
+--			if rdRwrL = '1' then
+--				lastR <= fromadc;
+--				todac <= lastL;
+--			end if;
+--	
+--		end if;
+
+		if readable = '0' then
+			state <= s0;
+		else
+			case state is
+				when s0 =>
+						position <= position + 1;
+						posDelay <= posDelay + 1;
+						state <= s1;
+				when s1 =>
+						SRAM_WE_N <= '0';
+						state <= s2;
+				when s2 =>
+						SRAM_WE_N <= '1';
+						state <= s3;
+				when s3 =>
+						SRAM_ADDR <= std_logic_vector(to_unsigned(position,18));
+						state <= s4;
+				when s4 =>
+						SRAM_OE_N <= '1';
+						state <= s5;
+				when s5 =>
+						wSignal <= SRAM_DQ;
+						state <= s6;
+				when s6 =>
+						SRAM_OE_N <= '0';
+						state <= s7;
+				when s7 =>
+						SRAM_ADDR <= std_logic_vector(to_unsigned(posDelay,18));
+						state <= s8;
+				when s8 =>
+						wSignal <= SRAM_DQ;
+						state <= s9;
+				when others =>
+						state <= s9;
+			end case;
+		end if;
+		
+	end process;	
 
 
 

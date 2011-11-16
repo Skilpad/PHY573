@@ -33,6 +33,26 @@ port(
 end component muxsoninout;
 
 
+component ram_reader
+port(
+  -- RAM
+	SRAM_ADDR : inout std_logic_vector (17 downto 0);
+	SRAM_WE_N : inout std_logic;
+	SRAM_OE_N : inout std_logic;
+	SRAM_DQ   : in  std_logic_vector (15 downto 0);
+  -- Time
+	CLOCK_50  : in  std_logic;
+  start     : in  std_logic;
+  freeRAM   : out std_logic;
+  -- Values
+  cnt       : in  std_logic_vector (17 downto 0);
+  delay     : in  std_logic_vector (17 downto 0);
+  alpha     : in  std_logic_vector (15 downto 0);
+  beta      : in  std_logic_vector (15 downto 0);
+  -- output
+  output    : out std_logic_vector (15 downto 0)
+);
+end component ram_reader;
 
 
 end notre_librairie;
