@@ -1,4 +1,15 @@
 
+-- writer00 write input0 = 2 in RAM[0] when SW(0) triggered
+-- writer01 write input1 = 5 in RAM[0] when SW(1) triggered
+-- reader0 set output0 to RAM[0] when SW(2) triggered
+-- writer10 write input0 = 2 in RAM[1+1] when SW(3) triggered
+-- writer11 write input1 = 5 in RAM[1+1] when SW(4) triggered
+-- reader1 set output0 to RAM[2] when SW(5) triggered
+
+-- LEDR(0) on <=> output0 = input0
+-- LEDR(1) on <=> output0 = input1
+-- LEDR(2) on <=> output1 = input0
+-- LEDR(3) on <=> output1 = input1
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -63,14 +74,25 @@ architecture boiteEffet_arch of boiteEffet is
 -- signal rdRwrL : std_logic := '0';
 -- signal rdLwrR : std_logic := '0';
 
-signal addr0  : integer range 0 to 262143 := 0;
-signal addr1  : integer range 0 to 262143 := 1;
+
+
+
+-- signal input0 : std_logic_vector (15 downto 0);
+-- signal input1 : std_logic_vector (15 downto 0);
+
+signal zero18 : integer range 0 to 262143 := 0;
+signal un18   : integer range 0 to 262143 := 1;
+signal deux18 : integer range 0 to 262143 := 2;
 signal zero16 : integer range 0 to 65536  := 0;
 signal un16   : integer range 0 to 65536  := 1;
 signal deux16 : integer range 0 to 65536  := 2;
 
+signal input0  : std_logic_vector (15 downto 0) := "0000000000000002";
+signal input1  : std_logic_vector (15 downto 0) := "0000000000000005";
+
 signal output0 : integer range 0 to 65536;
 signal output1 : integer range 0 to 65536;
+
 
 begin
 
@@ -99,8 +121,8 @@ begin
 --		AUD_BCLK    => AUD_BCLK  
 --	);
 
-	circuit_0 : ram_reader
-	port map(
+  writer00 : ram_writer
+  port map(
     -- RAM
     SRAM_ADDR => SRAM_ADDR,
     SRAM_WE_N => SRAM_WE_N,
@@ -111,16 +133,13 @@ begin
     start     => SW(0),
     freeRAM   => open,
     -- Values
-    cnt       => addr0,
-    delay     => addr0,
-    alpha     => un16,
-    beta      => zero16,
-    -- output
-    output    => output0
-	);
+    cnt       => zero18,
+    delay     => zero18,
+    input     => input0
+  );
 
-	circuit_1 : ram_reader
-	port map(
+  writer01 : ram_writer
+  port map(
     -- RAM
     SRAM_ADDR => SRAM_ADDR,
     SRAM_WE_N => SRAM_WE_N,
@@ -131,14 +150,90 @@ begin
     start     => SW(1),
     freeRAM   => open,
     -- Values
-    cnt       => addr1,
-    delay     => addr1,
+    cnt       => zero18,
+    delay     => zero18,
+    input     => input1
+  );
+
+  writer10 : ram_writer
+  port map(
+    -- RAM
+    SRAM_ADDR => SRAM_ADDR,
+    SRAM_WE_N => SRAM_WE_N,
+    SRAM_OE_N => SRAM_OE_N,
+    SRAM_DQ   => SRAM_DQ,
+    -- Time
+    CLOCK_50  => CLOCK_50,
+    start     => SW(3),
+    freeRAM   => open,
+    -- Values
+    cnt       => un18,
+    delay     => un18,
+    input     => input0
+  );
+
+  writer11 : ram_writer
+  port map(
+    -- RAM
+    SRAM_ADDR => SRAM_ADDR,
+    SRAM_WE_N => SRAM_WE_N,
+    SRAM_OE_N => SRAM_OE_N,
+    SRAM_DQ   => SRAM_DQ,
+    -- Time
+    CLOCK_50  => CLOCK_50,
+    start     => SW(4),
+    freeRAM   => open,
+    -- Values
+    cnt       => un18,
+    delay     => un18,
+    input     => input1
+  );
+
+	reader0 : ram_reader
+	port map(
+    -- RAM
+    SRAM_ADDR => SRAM_ADDR,
+    SRAM_WE_N => SRAM_WE_N,
+    SRAM_OE_N => SRAM_OE_N,
+    SRAM_DQ   => SRAM_DQ,
+    -- Time
+    CLOCK_50  => CLOCK_50,
+    start     => KEY(2),
+    freeRAM   => open,
+    -- Values
+    cnt       => zero18,
+    delay     => zero18,
+    alpha     => un16,
+    beta      => zero16,
+    -- output
+    output    => output0
+	);
+
+	reader1 : ram_reader
+	port map(
+    -- RAM
+    SRAM_ADDR => SRAM_ADDR,
+    SRAM_WE_N => SRAM_WE_N,
+    SRAM_OE_N => SRAM_OE_N,
+    SRAM_DQ   => SRAM_DQ,
+    -- Time
+    CLOCK_50  => CLOCK_50,
+    start     => KEY(5),
+    freeRAM   => open,
+    -- Values
+    cnt       => deux18,
+    delay     => zero18,
     alpha     => deux16,
     beta      => un16,
     -- output
     output    => output1
 	);
+  
+  LEDR(0) <= '1' when (output0 = input0) else '0';
+  LEDR(1) <= '1' when (output0 = input1) else '0';
+  LEDR(2) <= '1' when (output1 = input0) else '0';
+  LEDR(3) <= '1' when (output1 = input1) else '0';
+  
  
-
 
 end boiteEffet_arch;
