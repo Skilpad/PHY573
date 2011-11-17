@@ -33,9 +33,19 @@ architecture ram_writer_arch of ram_writer is
   type state_type is (start_is_0,ram_ready,writing,done);
   
   signal state : state_type := start_is_0;
+	signal SRAM_ADDR_loc : std_logic_vector (17 downto 0);
+	signal SRAM_WE_N_loc : std_logic;
+	signal SRAM_OE_N_loc : std_logic;
+	signal freeRAM_loc   : std_logic;
+
 
 begin
       
+  SRAM_ADDR <= SRAM_ADDR_loc when (freeRAM_loc = '0') else "ZZZZZZZZZZZZZZZZZZ";
+  SRAM_WE_N <= SRAM_WE_N_loc when (freeRAM_loc = '0') else 'Z';
+  SRAM_OE_N <= SRAM_OE_N_loc when (freeRAM_loc = '0') else 'Z';
+  freeRAM   <= freeRAM_loc;
+
   process (CLOCK_50)
 	begin
   
@@ -44,19 +54,19 @@ begin
           if start = '0' then
             state <= start_is_0;
           else
-            SRAM_ADDR <= cnt + delay;
-            SRAM_DQ   <= std_logic_vector(to_unsigned(input,16));
-            SRAM_OE_N <= '1';
-            SRAM_WE_N <= '1';
-            freeRAM   <= '0';
+            SRAM_ADDR_loc <= cnt + delay;
+            SRAM_DQ_loc   <= std_logic_vector(to_unsigned(input,16));
+            SRAM_OE_N_loc <= '1';
+            SRAM_WE_N_loc <= '1';
+            freeRAM_loc   <= '0';
             state <= ram_ready;
           end if;
       when ram_ready =>
-          SRAM_WE_N <= '0';
+          SRAM_WE_N_loc <= '0';
           state <= writing;
       when writing =>
-          SRAM_WE_N <= '0';
-          freeRAM   <= '1';
+          SRAM_WE_N_loc <= '0';
+          freeRAM_loc   <= '1';
           state <= done;
       when done =>
           if start = '0' then
