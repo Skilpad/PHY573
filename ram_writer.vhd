@@ -36,6 +36,7 @@ architecture ram_writer_arch of ram_writer is
 	signal SRAM_ADDR_loc : std_logic_vector (17 downto 0);
 	signal SRAM_WE_N_loc : std_logic;
 	signal SRAM_OE_N_loc : std_logic;
+	signal SRAM_DQ_loc   : std_logic_vector (15 downto 0);
 	signal freeRAM_loc   : std_logic;
 
 
@@ -44,6 +45,7 @@ begin
   SRAM_ADDR <= SRAM_ADDR_loc when (freeRAM_loc = '0') else "ZZZZZZZZZZZZZZZZZZ";
   SRAM_WE_N <= SRAM_WE_N_loc when (freeRAM_loc = '0') else 'Z';
   SRAM_OE_N <= SRAM_OE_N_loc when (freeRAM_loc = '0') else 'Z';
+  SRAM_DQ   <= SRAM_DQ_loc   when (freeRAM_loc = '0') else "ZZZZZZZZZZZZZZZZ";
   freeRAM   <= freeRAM_loc;
 
   process (CLOCK_50)
@@ -54,8 +56,8 @@ begin
           if start = '0' then
             state <= start_is_0;
           else
-            SRAM_ADDR_loc <= cnt + delay;
-            SRAM_DQ_loc   <= std_logic_vector(to_unsigned(input,16));
+            SRAM_ADDR_loc <= std_logic_vector(to_unsigned(cnt + delay,18));
+            SRAM_DQ_loc   <= input;
             SRAM_OE_N_loc <= '1';
             SRAM_WE_N_loc <= '1';
             freeRAM_loc   <= '0';

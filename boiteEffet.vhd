@@ -87,9 +87,11 @@ signal zero16 : integer range 0 to 65536  := 0;
 signal un16   : integer range 0 to 65536  := 1;
 signal deux16 : integer range 0 to 65536  := 2;
 
-signal input0  : std_logic_vector (15 downto 0) := "0000000000000002";
-signal input1  : std_logic_vector (15 downto 0) := "0000000000000005";
+signal input0  : std_logic_vector (15 downto 0) := "0000000000000010";
+signal input1  : std_logic_vector (15 downto 0) := "0000000000000101";
 
+signal in0     : integer range 0 to 65536 := 2;
+signal in1     : integer range 0 to 65536 := 5;
 signal output0 : integer range 0 to 65536;
 signal output1 : integer range 0 to 65536;
 
@@ -198,7 +200,7 @@ begin
     SRAM_DQ   => SRAM_DQ,
     -- Time
     CLOCK_50  => CLOCK_50,
-    start     => KEY(2),
+    start     => SW(2),
     freeRAM   => open,
     -- Values
     cnt       => zero18,
@@ -218,7 +220,7 @@ begin
     SRAM_DQ   => SRAM_DQ,
     -- Time
     CLOCK_50  => CLOCK_50,
-    start     => KEY(5),
+    start     => SW(5),
     freeRAM   => open,
     -- Values
     cnt       => deux18,
@@ -229,10 +231,10 @@ begin
     output    => output1
 	);
   
-  LEDR(0) <= '1' when (output0 = input0) else '0';
-  LEDR(1) <= '1' when (output0 = input1) else '0';
-  LEDR(2) <= '1' when (output1 = input0) else '0';
-  LEDR(3) <= '1' when (output1 = input1) else '0';
+  LEDR(0) <= '1' when (output0 = in0) else '0';
+  LEDR(1) <= '1' when (output0 = in1) else '0';
+  LEDR(2) <= '1' when (output1 = in0) else '0';
+  LEDR(3) <= '1' when (output1 = in1) else '0';
   
  
 
