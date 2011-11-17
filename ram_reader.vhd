@@ -37,8 +37,17 @@ architecture ram_reader_arch of ram_reader is
   
   signal state : state_type := start_is_0;
   signal x     : std_logic_vector (15 downto 0);      -- Read in RAM
+	signal SRAM_ADDR_loc : std_logic_vector (17 downto 0);
+	signal SRAM_WE_N_loc : std_logic;
+	signal SRAM_OE_N_loc : std_logic;
+	signal freeRAM_loc   : std_logic;
 
 begin
+  
+  SRAM_ADDR <= SRAM_ADDR_loc when (freeRAM_loc = '0') else "ZZZZZZZZZZZZZZZZZZ";
+  SRAM_WE_N <= SRAM_WE_N_loc when (freeRAM_loc = '0') else 'Z';
+  SRAM_OE_N <= SRAM_OE_N_loc when (freeRAM_loc = '0') else 'Z';
+  freeRAM   <= freeRAM_loc;
   
   process (CLOCK_50)
 	begin
@@ -48,18 +57,18 @@ begin
           if start = '0' then
             state <= start_is_0;
           else
-            SRAM_ADDR <= std_logic_vector(to_unsigned(cnt + delay,18));
-            SRAM_OE_N <= '0';
-            SRAM_WE_N <= '1';
-            freeRAM   <= '0';
+            SRAM_ADDR_loc <= std_logic_vector(to_unsigned(cnt + delay,18));
+            SRAM_OE_N_loc <= '0';
+            SRAM_WE_N_loc <= '1';
+            freeRAM_loc   <= '0';
             state <= ram_ready;
           end if;
       when ram_ready =>
           x       <= SRAM_DQ;
-          freeRAM <= '1';
+          freeRAM_loc <= '1';
           state <= x_read;
       when x_read =>
-          output <= alpha * x + beta;
+          output <= alpha ; -- * x + beta;
           state <= done;
       when done =>
           if start = '0' then
