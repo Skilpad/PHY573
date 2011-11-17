@@ -2,7 +2,6 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
 
 use work.notre_librairie.all;
 
@@ -16,32 +15,15 @@ use work.notre_librairie.all;
 
 
 entity boiteEffet is
-port (
+    port (
 
 -- liste des entrées sorties
 
-	KEY : in std_logic_vector(3 downto 0);
-	CLOCK_50 : in std_logic;
-	HEX0 : out std_logic_vector(6 downto 0);
-	LEDR : out std_logic_vector(17 downto 0);
+KEY : in std_logic_vector(3 downto 0);
+CLOCK_50 : in std_logic;
+HEX0 : out std_logic_vector(6 downto 0);
+LEDR : out std_logic_vector(17 downto 0)
 
-
-	I2C_SCLK    : out std_logic;   -- horloge du bus I²C
-	I2C_SDAT    : inout std_logic; -- donnée  du bus I²C
-	AUD_DACDAT  : out std_logic;   -- DAC donnée audio
-	AUD_ADCLRCK : out std_logic;   -- ADC horloge Gauche/Droite
-	AUD_ADCDAT  : in std_logic;    -- ADC donnée audio
-	AUD_DACLRCK : out std_logic;   -- DAC horloge Gauche/Droite
-	AUD_XCK     : out std_logic;   -- horloge du codec
-	AUD_BCLK    : out std_logic;   -- ADC/DAC horloge bit
-
-	SRAM_ADDR   : out std_logic_vector (17 downto 0);
-	SRAM_DQ     : inout std_logic_vector (15 downto 0); 
-	SRAM_WE_N   : out std_logic;
-	SRAM_OE_N   : out std_logic;
-	SRAM_UB_N   : out std_logic;
-	SRAM_LB_N   : out std_logic
-	
 -- name : mode type ;
 
     );
@@ -58,135 +40,138 @@ architecture boiteEffet_arch of boiteEffet is
 
 -- signal declaration
 -- signal  name : type  := valeur initiale;
+signal maxDivis : integer range 1 to 10000000 := 1;
+signal divis : integer range 1 to 10000000 := 1;
+signal tempo : integer range 1 to 9 := 1;
+signal danse : integer range 1 to 17 := 1;
+signal appui : std_logic := '0';
+signal a : std_logic := '1';
+signal b : std_logic := '1';
+signal hasRdLwrR : std_logic := '0';
+signal hasRdRwrL : std_logic := '0';
 
--- signal maxDivis : integer range 1 to 10000000 := 1;
--- signal divis : integer range 1 to 10000000 := 1;
--- signal tempo : integer range 1 to 9 := 1;
--- signal danse : integer range 1 to 17 := 1;
--- signal appui : std_logic := '0';
--- signal a : std_logic := '1';
--- signal b : std_logic := '1';
--- signal hasRdLwrR : std_logic := '0';
--- signal hasRdRwrL : std_logic := '0';
---
--- signal todac   : std_logic_vector (15 downto 0);
--- signal fromadc : std_logic_vector (15 downto 0);
--- signal rdRwrL  : std_logic := '0';
--- signal rdLwrR  : std_logic := '0';
--- 
--- signal lastL : std_logic_vector (15 downto 0);
--- signal lastR : std_logic_vector (15 downto 0);
+signal todac  : std_logic_vector (15 downto 0);
+signal fromadc: std_logic_vector (15 downto 0);
+signal rdRwrL : std_logic := '0';
+signal rdLwrR : std_logic := '0';
+
+ signal     I2C_SCLK    : std_logic;   -- horloge du bus I²C
+  signal    I2C_SDAT    : std_logic; -- donnée  du bus I²C
+  signal    AUD_DACDAT  : std_logic;   -- DAC donnée audio
+ signal     AUD_ADCLRCK : std_logic;   -- ADC horloge Gauche/Droite
+ signal     AUD_ADCDAT  : std_logic;    -- ADC donnée audio
+ signal     AUD_DACLRCK : std_logic;   -- DAC horloge Gauche/Droite
+ signal     AUD_XCK     : std_logic;   -- horloge du codec
+  signal    AUD_BCLK    : std_logic;    -- ADC/DAC horloge bit
 
 
-type state_type is (s0,s1,s2,s3,s4,s5,s6,s7,s8,s9);
-
-signal position : integer range 0 to 131072 := 0;      -- Readed position in memory
-signal posDelay : integer range 0 to 131072 := 70000;  -- Written position in memory
-signal rSignal  : std_logic_vector (15 downto 0);      -- Signal read from input
-signal wSignal  : std_logic_vector (15 downto 0);      -- Signal to write to output
-signal readable : std_logic := '0';                    -- If rSignal is correct
-
-signal state : state_type;
-
--- signal zzz : std_logic_vector (15 downto 0) := "0000000000000000";
+  
 
 
 
 begin
 
---	circuit_2 : muxsoninout
---	port map(
---		clk     => CLOCK_50,
---		todac   => todac,
---		fromadc => fromadc,
---		rdRwrL  => rdRwrL,
---		rdLwrR  => rdLwrR,
---		-- signaux 
---		I2C_SCLK    => I2C_SCLK,
---		I2C_SDAT    => I2C_SDAT,
---		AUD_DACDAT  => AUD_DACDAT,
---		AUD_ADCLRCK => AUD_ADCLRCK,
---		AUD_ADCDAT  => AUD_ADCDAT,
---		AUD_DACLRCK => AUD_DACLRCK,
---		AUD_XCK     => AUD_XCK,
---		AUD_BCLK    => AUD_BCLK  
---	);
 
-	circuit_1 : muxsoninout
-	port map(
-		clk     => CLOCK_50,
-		todac   => wSignal,
-		fromadc => rSignal,
-		rdRwrL  => open,
-		rdLwrR  => readable,
-		-- signaux 
-		I2C_SCLK    => I2C_SCLK,
-		I2C_SDAT    => I2C_SDAT,
-		AUD_DACDAT  => AUD_DACDAT,
-		AUD_ADCLRCK => AUD_ADCLRCK,
-		AUD_ADCDAT  => AUD_ADCDAT,
-		AUD_DACLRCK => AUD_DACLRCK,
-		AUD_XCK     => AUD_XCK,
-		AUD_BCLK    => AUD_BCLK  
-	);
+appui <= b and (a xor b);
+
+
+LedsRouges : for toto in 0 to 17 generate
+
+LEDR(toto) <= '1' when (danse = toto) else '0';
+
+end generate;
+	
+
+with tempo select
+	-- RAPPEL: 1 = INACTIF, 0 = ACTIF
+	maxDivis <=10000000 when 1,
+				5000000 when 2,
+				1000000 when 3,
+				500000 when 4,
+				100000 when 5,
+				50000 when 6,
+				10000 when 7,
+				5000 when 8,
+				1000 when 9,
+				100000 when others;
+				
+
+ 
+process (CLOCK_50)
+	begin
+	
+	if CLOCK_50'event and CLOCK_50 = '1' then
+
+		b <= a;
+		a <= KEY(3);
+		
+	end if;
+end process;
+ 
+ 
+process (CLOCK_50)
+begin
+
+ 	if CLOCK_50'event and CLOCK_50 = '1' then
 
 	
-	process (CLOCK_50)
-	begin
-
---		if rising_edge(CLOCK_50) then
---			
---			if rdLwrR = '1' then
---				lastL <= fromadc;
---				todac <= lastR;
---			end if;
---
---			if rdRwrL = '1' then
---				lastR <= fromadc;
---				todac <= lastL;
---			end if;
---	
---		end if;
-
-		if readable = '0' then
-			state <= s0;
+		if rdRwrL = '1' then 
+		-- Lecture droite, ecriture gauche
+			if hasRdRwrL = '0' then
+				todac <= fromadc;
+	  
+				hasRdRwrL <= '1';
+			end if;
 		else
-			case state is
-				when s0 =>
-						position <= position + 1;
-						posDelay <= posDelay + 1;
-						state <= s1;
-				when s1 =>
-						SRAM_WE_N <= '0';
-						state <= s2;
-				when s2 =>
-						SRAM_WE_N <= '1';
-						state <= s3;
-				when s3 =>
-						SRAM_ADDR <= std_logic_vector(to_unsigned(position,18));
-						state <= s4;
-				when s4 =>
-						SRAM_OE_N <= '1';
-						state <= s5;
-				when s5 =>
-						wSignal <= SRAM_DQ;
-						state <= s6;
-				when s6 =>
-						SRAM_OE_N <= '0';
-						state <= s7;
-				when s7 =>
-						SRAM_ADDR <= std_logic_vector(to_unsigned(posDelay,18));
-						state <= s8;
-				when s8 =>
-						wSignal <= SRAM_DQ;
-						state <= s9;
-				when others =>
-						state <= s9;
-			end case;
+		   hasRdRwrL <= '0';
 		end if;
-		
-	end process;	
+	  
+	
+	-- todac   : in std_logic_vector (15 downto 0);  -- donnee HP (signed)
+   -- fromadc : out std_logic_vector (15 downto 0); -- donnee ligne (signed)    
+	  
 
+		if hasRdLwrR = '1' then
+			-- Lecture gauche, ecriture droite
+			if hasRdLwrR = '0' then
+				todac <= fromadc;
+				hasRdLwrR <= '1';
+			end if;
+		else
+			hasRdLwrR <= '0';
+		end if;
+	end if;
+		
+	
+	                
+
+
+end process;	
+
+
+circuit_2 : muxsoninout
+port map(
+clk     => CLOCK_50,
+todac   => todac,
+fromadc => fromadc,
+rdRwrL  => rdRwrL,
+rdLwrR  => rdLwrR,
+-- signaux 
+I2C_SCLK    => I2C_SCLK,
+I2C_SDAT    => I2C_SDAT,
+AUD_DACDAT  => AUD_DACDAT,
+AUD_ADCLRCK => AUD_ADCLRCK,
+AUD_ADCDAT  => AUD_ADCDAT,
+AUD_DACLRCK => AUD_DACLRCK,
+AUD_XCK     => AUD_XCK,
+AUD_BCLK    => AUD_BCLK  
+);
+
+circuit_1 : decodeur
+port map(
+nombre => tempo, -- tempo
+sortie => HEX0
+);
 
 
 
