@@ -35,12 +35,13 @@ port(
 	-- AUD_XCK     : out std_logic;   -- horloge du codec
 	-- AUD_BCLK    : out std_logic;   -- ADC/DAC horloge bit
 
-	SRAM_ADDR   : inout std_logic_vector (17 downto 0);
+	SRAM_ADDR   : out std_logic_vector (17 downto 0);
 	SRAM_DQ     : inout std_logic_vector (15 downto 0); 
-	SRAM_WE_N   : inout std_logic;
-	SRAM_OE_N   : inout std_logic;
+	SRAM_WE_N   : out std_logic;
+	SRAM_OE_N   : out std_logic;
 	SRAM_UB_N   : out std_logic;
-	SRAM_LB_N   : out std_logic
+	SRAM_LB_N   : out std_logic;
+	SRAM_CE_N   : out std_logic
 
 );
 end boiteEffet;
@@ -73,6 +74,13 @@ signal output1 : integer range 0 to 65536;
 
 begin
 
+
+	SRAM_UB_N <= '0';
+	SRAM_LB_N <= '0';
+	SRAM_CE_N <= '0';
+
+  
+  
 --	circuit_2 : muxsoninout
 --	port map(
 --		clk     => CLOCK_50,
