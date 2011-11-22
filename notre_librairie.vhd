@@ -76,6 +76,32 @@ port(
 end component muxsoninout;
 
 
+component fat_reader
+-- generic (
+    -- N = 500;
+    -- sumCoeffExp = 4;    -- Les coefficients multiplicateurs a[i] vérifient Sum(a[i]) = 2^n
+-- );
+port (
+    -- RAM
+    SRAM_ADDR : out std_logic_vector (17 downto 0);
+    SRAM_WE_N : out std_logic;
+    SRAM_OE_N : out std_logic;
+    SRAM_DQ   : in  std_logic_vector (15 downto 0);
+    -- Time
+    CLOCK_50  : in  std_logic;
+    start     : in  std_logic;
+    useRAM    : out std_logic;
+    -- Values
+    i         : in  unsigned(17 downto 0);      -- 2^18 = 262144 cells in RAM
+    delay     : in  unsigned_array18;
+    coeff     : in  unsigned_array16;       -- 2^16 = 65536
+    -- output
+    output    : out std_logic_vector (15 downto 0)
+);
+end component fat_reader;
+
+
+
 component ram_reader
 port(
   -- RAM
