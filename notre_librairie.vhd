@@ -3,6 +3,7 @@ use IEEE.std_logic_1164.all;
 
 package notre_librairie is
 
+
 component decodeur
 port(
   nombre : in integer range 0 to 9;
@@ -10,6 +11,48 @@ port(
 );
 end component decodeur;
 
+
+
+--component generateur_coefs
+--port(
+--);
+--end component generateur_coefs;
+
+
+
+component encapsuleur_lcd
+port(
+           ch0     : in std_logic_vector(7 downto 0);
+           clk     : in std_logic;
+
+		     LCD_ON : out std_logic := '1';	
+           LCD_EN : out std_logic := '1';
+           LCD_RS : out std_logic := '0';
+           LCD_RW : out std_logic := '1'; 
+           LCD_DATA : inout std_logic_vector(7 downto 0):= "00000000"; 
+);
+end component encapsuleur_lcd;
+
+
+component simple_lcd
+port(
+
+           ligne    : in std_logic ;
+           place 	  : in std_logic_vector(3 downto 0);
+           data     : in std_logic_vector(7 downto 0);
+           enaadd   : in std_logic ;
+           enadata  :  in std_logic ;
+		     wr       : in  std_logic; 
+           clk      : in std_logic;
+
+		     LCD_ON : out std_logic := '1';	
+           LCD_EN : out std_logic := '1';
+           LCD_RS : out std_logic := '0';
+           LCD_RW : out std_logic := '1'; 
+           LCD_DATA : inout std_logic_vector(7 downto 0):= "00000000";
+		     busy   : out std_logic := '1'  
+);
+end component simple_lcd;
 
 
 component muxsoninout
