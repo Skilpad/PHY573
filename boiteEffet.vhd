@@ -3,6 +3,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use work.notre_librairie.all;
 use IEEE.numeric_std.all;
+use work.nos_types.all;
 
 -- sélectionner les bibliothèques dont vous aurez besoin
 -- use IEEE.std_logic_arith.all;
@@ -89,15 +90,14 @@ signal a_enadata  : std_logic := '0';
 signal a_wr       : std_logic := '0'; 
 signal a_busy     : std_logic;-- := '1' -- BUSY est OUT, les autres sont IN
 			
-			
+signal modeCoef : integer range 0 to 1 := 0;			
+
+signal totoadc : std_logic_vector (15 downto 0);
+signal fofromadc : std_logic_vector (15 downto 0);
 
 
-signal sramAddr : std_logic_vector (17 downto 0);
-signal sramOut  : std_logic_vector (15 downto 0);
-signal sramIn   : std_logic_vector (15 downto 0);
-signal sramOE   : std_logic := '1';
-signal sramWE   : std_logic := '1';
-
+signal delayLink : unsigned_array18;
+signal coeffLink : signed_array16;
 
 signal prev0 : signed (15 downto 0);
 signal prev1 : signed (15 downto 0);
@@ -113,18 +113,70 @@ signal prev9 : signed (15 downto 0);
 signal tempInt : signed (15 downto 0);
 signal lastIn  : signed (15 downto 0);
 
-type StateType is (waiting,wr,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,finished);
+signal startFat : std_logic := '0';
+signal indexFat : unsigned(17 downto 0);
+signal outputFat : std_logic_vector (15 downto 0);
+
+type StateType is (waiting,calculating1,calculating2,finished);
 signal state : StateType := waiting;
 
 
 type writeMsgType is (chP0, chP1, ch0, ch1, ch2, ch3, ch4);
 signal writeState : writeMsgType := ch1;
 
+
+--signal SRAM_ADDR_FAT : std_logic_vector (17 downto 0);
+--signal SRAM_WE_N_FAT : std_logic;
+--signal SRAM_OE_N_FAT : std_logic;
+--signal SRAM_DQ_FAT   : std_logic_vector (15 downto 0);
+
+signal ramBusy : std_logic;
+
+signal debugFat : std_logic_vector(15 downto 0);
+
 begin
 
 
-	circuit_2 : muxsoninout
-	port map(
+
+circuit_5 : fat_reader
+port map(
+    -- RAM
+    SRAM_ADDR => SRAM_ADDR,
+    SRAM_WE_N => SRAM_WE_N,
+    SRAM_OE_N => SRAM_OE_N,
+    SRAM_DQ => SRAM_DQ,
+    -- Time
+    CLOCK_50  => CLOCK_50,
+    start     => startFat,
+    useRAM    => ramBusy,
+    -- Values
+    i          => indexFat,
+    delay      => delayLink,
+    coeff      => coeffLink,
+	 
+    -- output
+	 input     => fromadc,
+    output    => outputFat,
+
+	 debug => debugFat
+);
+
+
+circuit_6 : coef_machine
+port map(
+
+	mode => modeCoef,
+	
+   delay => delayLink,
+   coeff => coeffLink
+);
+
+
+
+
+
+circuit_2 : muxsoninout
+port map(
 		clk     => CLOCK_50,
 		todac   => todac,
 		fromadc => fromadc,
@@ -171,67 +223,36 @@ begin
 	SRAM_UB_N <= '0'; -- Active le travail sur les bits de haut poids
 	SRAM_LB_N <= '0'; -- Active le travail sur les bits de faible poids
 	
-	-- Sorties de pilotages
-	SRAM_OE_N <= sramOE;
-	SRAM_WE_N <= sramWE;
-	SRAM_ADDR <= sramAddr;
-	
-   -- Buffer double sens
-	with sramOE select
-	sramIn <= SRAM_DQ when '0',
-				 "0000000000000000" when others;
-	
-	with sramOE select
-	SRAM_DQ <= "ZZZZZZZZZZZZZZZZ" when '0',
-				  sramOut when others;
-	
-	
-	
+	indexFat <= to_unsigned(wIndex ,18);
+
 	----------------------------
 	--  CONNECTIQUE DE DEBUG  --
 	----------------------------
-
 	GPIO_0(0) <= CLOCK_50;
-	GPIO_0(1) <= sramWE;
-	GPIO_0(2) <= sramOE;
-	
-	--GPIO_0(3) <= rdRwrL;
-	GPIO_0(3) <= '0';
-	
-	GPIO_0(4) <= sramIn(0);
-	GPIO_0(5) <= sramIn(1);
-	GPIO_0(6) <= sramIn(2);
-	
-	GPIO_0(7) <= '0';
-	
-	GPIO_0(8) <= sramAddr(0);
-	GPIO_0(9) <= sramAddr(1);
-	GPIO_0(10) <= sramAddr(2);
-	
 
+	with state select			
+	GPIO_0(2 downto 1) <= "00" when waiting,
+								 "01" when calculating1,
+						 		 "10" when calculating2,
+						 		 "11" when finished;
+								 
 	
-	GPIO_0(14) <= '0';
-	GPIO_0(15) <= '0';
+	GPIO_0(5 downto 3) <= outputFat(2 downto 0);
 	
-	GPIO_0(16) <= sramOut(0);
-	GPIO_0(17) <= sramOut(1);
-	GPIO_0(18) <= sramOut(2);
-	
-	GPIO_0(31 downto 28) <= "0000";
-	
+	GPIO_0(25 downto 10) <= debugFat(15 downto 0);
 	
 	--with SW(14) select
 	--	a_place <= "0100" when '0',
 	--				  "1000" when others;
 		
 	--a_place <= "0000";
-	
-	
 	--a_data <= "00110000";
 	
 	--a_enaadd <= SW(17);
 	--a_enadata <= SW(16);
 	--a_wr <= SW(15);
+	
+	
 	
 	
 	process (CLOCK_50)
@@ -252,48 +273,40 @@ begin
 				writeState <= chP1;
 				
 				when chP1 =>
-	
-					
 					a_wr <= '0';
 				 	a_enaadd <= '1';
 					a_enadata <= '1';
 					writeState <= ch0;
 					
 				when ch0 =>
-	
 					a_wr <= '1';
 					a_data <= "00110000";
 					a_place <= "0000";
 					writeState <= ch1;
 					
 				when ch1 =>
-	
 					--a_wr <= '1';
 					a_data <= "00110001";
 					a_place <= "0001";
 					writeState <= ch2;
 					
 				when ch2 =>
-	
 					--a_wr <= '1';
 					a_data <= "00110010";
 					a_place <= "0010";
 					writeState <= ch3;
 					
 				when ch3 =>
-	
 					--a_wr <= '1';
 					a_data <= "00110011";
 					a_place <= "0011";
 					writeState <= ch3;
 					
 				when ch4 =>
-	
 					--a_place <= "0100";
 					writeState <= chP0;
 					--a_wr <= '0';
-				
-				
+							
 			end case;
 			end if;
 	
@@ -301,12 +314,11 @@ begin
 	end process;	
 	
 	
+	
 	process (CLOCK_50)
 	begin
-
 		if rising_edge(CLOCK_50) then
-			
-			
+				
 			-- Code pour lien direct, ecrit la droite sur la gauche
 		--	if rdLwrR = '1' then
 		--		lastL <= fromadc;
@@ -318,95 +330,30 @@ begin
 		--		todac <= lastL;
 		--	end if;
 			
-			
 			if rdLwrR = '1' then
 				
 				case state is
 				
-				when waiting =>
-				      -- Si WE n'est pas a 1, il faut prevoir une etape en amont pour ly mettre
-						sramOE <= '1'; -- Preparation a lecriture
-						sramWE <= '0'; -- Autorisation ecriture, asynchrone
-						sramAddr <= std_logic_vector(to_unsigned(wIndex,18));
-						sramOut  <= fromadc;
-						lastIn   <= signed(fromadc);
-						state    <= wr;
+					when waiting =>
+						startFat <= '1';
+						fofromadc <= fromadc;
+						state <= calculating1;
 
-				when wr =>
-						sramWE   <= '1'; -- Avec ce nouveau cycle, l'ecriture s'est termine
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex,18));
-						state    <= r0;
-				
-				when r0 =>
-						prev0    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 1,18));
-						state    <= r1;
+					when calculating1 =>
+						state <= calculating2;
+					when calculating2 =>
 						
-				when r1 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 2,18));
-						state    <= r2;
-			
-				when r2 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 3,18));
-						state    <= r3;
+						startFat <= '0';
+						if ramBusy = '0' then
+							state <= finished;
+							wIndex <= wIndex - 1;
+							totoadc <= outputFat;
+						end if;
 				
-				when r3 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 4,18));
-						state    <= r4;	
-				
-				when r4 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 5,18));
-						state    <= r5;	
-				
-				when r5 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 6,18));
-						state    <= r6;	
-				
-				when r6 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 7,18));
-						state    <= r7;	
-				
-				when r7 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 8,18));
-						state    <= r8;	
-				
-				when r8 =>
-						prev1    <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						sramOE   <= '0'; -- Mettra SRAM_DQ en haute impedance
-						sramAddr <= std_logic_vector(to_unsigned(rIndex - 9,18));
-						state    <= r9;			
-				
-				when r9 =>
-						prev9  <= signed(sramIn); -- Avec ce nouveau cycle, la lecture est stable
-						rIndex <= rIndex + 1;
-						wIndex <= wIndex + 1;
-						state  <= finished;
-						
-						
-				when finished =>
+					when finished =>
 					-- Attention, ce cas se produit un grand nombre de fois sur chaque echantillon
-					sramOE <= '1';
-
 
 				end case;
-			
-
 			 else
 					state <= waiting;
 			 end if;
@@ -422,7 +369,7 @@ begin
 	-- Conversion logic->integer: to_integer(unsigned(MY_VECT))
 
 
-	tempInt <= prev0 / 8 + prev1/ 8 + prev2/ 8 + prev3/ 8  + prev4/ 8  + prev5/ 8  + prev6 / 8 + prev7/ 8 ;
+	--tempInt <= prev0 / 8 + prev1/ 8 + prev2/ 8 + prev3/ 8  + prev4/ 8  + prev5/ 8  + prev6 / 8 + prev7/ 8 ;
 	
 
 	--tempInt <= ((prev0 / 2) + (lastIn / 2));
@@ -430,15 +377,11 @@ begin
 		
 			
 	with SW(0) select
-		todac <= std_logic_vector(tempInt) when '1',
-					std_logic_vector(prev0) when others;
+		todac <= totoadc when '1',
+					fofromadc when others;
 	
-	with SW(0) select			
-		LEDR(0) <= '1' when '1',
-					  '0' when others;
-					  
-	
-	LedRouges: for gen in 1 to 17 generate
+
+	LedRouges: for gen in 0 to 17 generate
 	
 		with SW(gen) select
 			LEDR(gen) <= '1' when '1',

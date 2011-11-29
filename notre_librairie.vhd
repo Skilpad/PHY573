@@ -1,5 +1,7 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
+use work.nos_types.all;
 
 package notre_librairie is
 
@@ -29,7 +31,8 @@ port(
            LCD_EN : out std_logic := '1';
            LCD_RS : out std_logic := '0';
            LCD_RW : out std_logic := '1'; 
-           LCD_DATA : inout std_logic_vector(7 downto 0):= "00000000"; 
+           LCD_DATA : inout std_logic_vector(7 downto 0):= "00000000"
+			  
 );
 end component encapsuleur_lcd;
 
@@ -76,17 +79,25 @@ port(
 end component muxsoninout;
 
 
+
+component coef_machine
+port(
+	mode : in integer range 0 to 1;
+	
+   delay : out  unsigned_array18;
+   coeff : out  signed_array16
+);
+end component coef_machine;
+
+
 component fat_reader
--- generic (
-    -- N = 500;
-    -- sumCoeffExp = 4;    -- Les coefficients multiplicateurs a[i] vérifient Sum(a[i]) = 2^n
--- );
+
 port (
     -- RAM
     SRAM_ADDR : out std_logic_vector (17 downto 0);
     SRAM_WE_N : out std_logic;
     SRAM_OE_N : out std_logic;
-    SRAM_DQ   : in  std_logic_vector (15 downto 0);
+    SRAM_DQ   : inout  std_logic_vector (15 downto 0);
     -- Time
     CLOCK_50  : in  std_logic;
     start     : in  std_logic;
@@ -94,9 +105,11 @@ port (
     -- Values
     i         : in  unsigned(17 downto 0);      -- 2^18 = 262144 cells in RAM
     delay     : in  unsigned_array18;
-    coeff     : in  unsigned_array16;       -- 2^16 = 65536
+    coeff     : in  signed_array16;       -- 2^16 = 65536
     -- output
-    output    : out std_logic_vector (15 downto 0)
+    output    : out std_logic_vector (15 downto 0);
+	 input     : in std_logic_vector (15 downto 0);
+	 debug     : out std_logic_vector (15 downto 0)
 );
 end component fat_reader;
 
